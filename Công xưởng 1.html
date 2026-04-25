@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mê học trung - Mehoctrung68 Master Final</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5/dist/hanzi-writer.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --china-red: #bc241c; --china-gold: #d4af37; --china-dark: #8b1a14; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f4ece1;
+            background-image: url("https://www.transparenttextures.com/patterns/natural-paper.png");
+            overflow-x: hidden;
+            display: flex; flex-direction: column; min-height: 100vh;
+        }
+        .chinese-font { font-family: 'Noto Sans SC', sans-serif; }
+        .art-font { font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 1.5rem; letter-spacing: -0.5px; color: white; text-transform: uppercase; line-height: 1.2; }
+        .header-link { font-size: 10px; color: #ffde00; font-weight: 600; text-decoration: underline; opacity: 0.9; transition: opacity 0.2s; }
+        .header-link:hover { opacity: 1; color: white; }
+        .card-inner { transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
+        .flipped .card-inner { transform: rotateY(180deg); }
+        .card-front, .card-back {
+            position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
+            border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border: 6px solid var(--china-gold); box-shadow: 0 15px 35px rgba(0,0,0,0.2); padding: 20px;
+        }
+        .card-front { background: linear-gradient(135deg, var(--china-red), var(--china-dark)); color: white; }
+        .card-back { background: white; color: #333; transform: rotateY(180deg); }
+        .btn-china { background: linear-gradient(135deg, var(--china-red), var(--china-dark)); color: white; box-shadow: 0 4px 0 #66110d; transition: all 0.2s; }
+        .btn-china:active { transform: translateY(2px); box-shadow: 0 1px 0 #66110d; }
+        .memory-input { width: 100px; padding: 6px; border: 1px solid #ddd; border-radius: 6px; text-align: center; font-family: 'Noto Sans SC', sans-serif; transition: all 0.3s; background: white; }
+        .memory-input.correct { border-color: #22c55e !important; background-color: #f0fdf4 !important; color: #166534 !important; font-weight: bold; }
+        .memory-input.wrong { border-color: #ef4444 !important; background-color: #fee2e2 !important; color: #991b1b !important; font-weight: bold; }
+        .timer-badge { background: rgba(0,0,0,0.3); color: #ffde00; padding: 4px 12px; border-radius: 20px; font-family: monospace; font-size: 13px; font-weight: bold; border: 1px solid rgba(255,222,0,0.3); }
+        .search-box { background: white; border: 2px solid var(--china-gold); border-radius: 12px; padding: 10px 15px; width: 100%; max-width: 500px; font-family: 'Montserrat', sans-serif; font-weight: 600; color: var(--china-dark); box-shadow: 0 4px 6px rgba(0,0,0,0.05); outline: none; }
+        .scroll-custom::-webkit-scrollbar { width: 6px; height: 6px; }
+        .scroll-custom::-webkit-scrollbar-track { background: transparent; }
+        .scroll-custom::-webkit-scrollbar-thumb { background: var(--china-gold); border-radius: 10px; }
+        .hidden-content { filter: blur(8px); user-select: none; opacity: 0.3; }
+        .flash-action-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 110px; height: 110px; border-radius: 24px; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        .flash-action-btn.active { background: var(--china-gold); border-color: white; transform: scale(1.1); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .flash-action-btn:hover { background: rgba(255,255,255,0.25); }
+        .flash-action-btn span { font-size: 2.8rem; margin-bottom: 4px; }
+        .flash-action-btn p { font-size: 0.8rem; font-weight: 900; letter-spacing: 1px; color: white; }
+        #flash-writer-container { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -60%); background: white; border-radius: 15px; padding: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); display: none; z-index: 50; }
+        #writing-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+        .modal-content { background: #f4ece1; padding: 2rem; border-radius: 20px; border: 8px solid var(--china-gold); max-width: 90%; width: 400px; text-align: center; position: relative; }
+        .panda-decoration { position: fixed; bottom: 120px; right: 10px; font-size: 80px; z-index: 0; opacity: 0.8; pointer-events: none; }
+        .lantern-decoration { position: absolute; top: -5px; left: 20px; font-size: 40px; animation: swing 3s ease-in-out infinite; transform-origin: top center; }
+        @keyframes swing { 0%, 100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
+        .page-footer { width: 100%; padding: 20px 0; text-align: center; margin-top: auto; position: relative; z-index: 20; }
+        .toggle-btn { font-size: 10px; padding: 2px 8px; border-radius: 4px; background: var(--china-gold); color: white; margin-left: 5px; cursor: pointer; border: none; vertical-align: middle; font-weight: bold; }
+        .quiz-correct { background-color: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; animation: bounce 0.5s ease; }
+        .quiz-wrong { background-color: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; animation: shake 0.4s ease; }
+        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+        .tip-card { background: white; border-left: 8px solid var(--china-red); border-radius: 15px; margin-bottom: 15px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.2s; position: relative; }
+        .tip-card:hover { transform: translateX(10px); }
+        .tip-speaker { position: absolute; top: 20px; right: 20px; background: #fff5f5; color: var(--china-red); padding: 8px; border-radius: 50%; cursor: pointer; transition: all 0.2s; border: 1px solid #ffebeb; }
+        .tip-speaker:hover { background: var(--china-red); color: white; transform: scale(1.1); }
+    </style>
+</head>
+<body>
+    <div class="panda-decoration">🐼</div><div class="lantern-decoration">🏮</div>
+    <div id="writing-modal" onclick="closeWritingModal()"><div class="modal-content" onclick="event.stopPropagation()"><button onclick="closeWritingModal()" class="absolute top-2 right-4 text-3xl text-red-800 font-bold">&times;</button><h3 class="text-xl font-bold text-red-800 mb-2 font-quicksand uppercase">Tập viết chữ Hán</h3><p id="modal-pinyin" class="text-gray-500 italic mb-4 font-semibold"></p><div id="writer-target" class="bg-white rounded-xl inline-block border-4 border-yellow-500 shadow-inner"></div><div class="mt-4"><button onclick="animateStrokes()" class="btn-china px-8 py-2 rounded-xl font-bold uppercase">Vẽ lại</button></div></div></div>
+    
+    <header class="w-full bg-[#bc241c] py-6 px-4 shadow-2xl border-b-4 border-[#d4af37] relative overflow-hidden z-10">
+        <div class="max-w-7xl mx-auto flex justify-between items-center relative z-10">
+            <div class="flex items-center gap-4">
+                <div class="bg-yellow-400 p-2 rounded-full border-2 border-white shadow-lg"><span class="text-xl">🏮</span></div>
+                <div class="flex flex-col">
+                    <h1 class="art-font">MÊ HỌC TRUNG</h1>
+                    <a href="https://www.tiktok.com/@mehoctrung_?_r=1&_t=ZS-95ixxa7dvbr" target="_blank" class="header-link mt-1">Follow mình nghen: Tiktok "Mê học trung"</a>
+                </div>
+            </div>
+            <div class="flex flex-col items-end gap-2">
+                <div class="timer-badge" id="study-timer">00:00:00</div>
+                <div id="score-box" class="bg-black/20 px-4 py-1 rounded-xl backdrop-blur-md border border-white/20 text-center">
+                    <span id="score-val" class="text-xl font-bold text-yellow-300">0</span>
+                    <span class="text-white text-[9px] block opacity-70 uppercase font-bold">Điểm</span>
+                </div>
+            </div>
+        </div>
+        <svg class="opacity-10 absolute top-0 right-0 w-48 h-48 fill-white" viewBox="0 0 100 100"><path d="M20,50 Q20,30 40,30 Q50,10 70,30 Q90,30 90,50 Q90,70 70,70 Q60,90 40,70 Q20,70 20,50"/></svg>
+    </header>
+
+    <nav class="w-full max-w-5xl flex flex-wrap justify-around mt-6 px-4 mx-auto gap-2 z-10">
+        <button onclick="switchTab('library')" class="tab-btn flex-1 min-w-[100px] py-3 rounded-xl font-bold transition-all bg-white text-red-800 shadow-lg border-b-4 border-red-800">Thư viện</button>
+        <button onclick="switchTab('tips')" class="tab-btn flex-1 min-w-[100px] py-3 rounded-xl font-bold transition-all bg-white/50 text-gray-600">Mẹo nhớ chữ Hán</button>
+        <button onclick="switchTab('typingHz')" class="tab-btn flex-1 min-w-[100px] py-3 rounded-xl font-bold transition-all bg-white/50 text-gray-600">Gõ chữ tiếng hán</button>
+        <button onclick="switchTab('typingVi')" class="tab-btn flex-1 min-w-[100px] py-3 rounded-xl font-bold transition-all bg-white/50 text-gray-600">Gõ chữ tiếng việt</button>
+        <button onclick="switchTab('flashcard')" class="tab-btn flex-1 min-w-[100px] py-3 rounded-xl font-bold transition-all bg-white/50 text-gray-600">Flashcard</button>
+        <button onclick="switchTab('quiz')" class="tab-btn flex-1 min-w-[100px] py-3 rounded-xl font-bold transition-all bg-white/50 text-gray-600">Trắc nghiệm</button>
+    </nav>
+
+    <main id="app-body" class="w-full max-w-[98%] p-6 mx-auto flex flex-col items-center z-10 min-h-[60vh]"></main>
+
+    <footer class="page-footer">
+        <p class="text-red-800 font-bold text-[11px] italic drop-shadow-sm mb-1 uppercase tracking-wide">Tạo bởi “Mê học Trung” - Follow mình nghen</p>
+        <p class="text-gray-600 font-semibold tracking-wide text-[10px]">Kết nối: <a href="https://www.tiktok.com/@mehoctrung_?_r=1&_t=ZS-95ixxa7dvbr" target="_blank" class="text-red-600 underline hover:text-red-800 transition-colors font-bold">TikTok Mê học trung</a></p>
+    </footer>
+
+    <script>
+        // --- DỮ LIỆU TỪ VỰNG: Phân tích chi tiết 100% ---
+        const vocabulary = [
+            { hz: "投入", py: "tóurù", type: "Động từ", vi: "Đưa vào, bỏ vào", tip: "投 (Đầu): Bên trái là bộ 扌 (Thủ - cái tay), bên phải là chữ 殳 (Thù - binh khí/gậy). Mẹo nhớ: Dùng tay (扌) cầm vật ném đi hoặc đưa vào đâu đó. 入 (Nhập): Hình ảnh một cái lối vào hoặc người đang bước vào trong. Nghĩa là đi vào.", ex: "投入生产 (Đưa vào sản xuất)" },
+            { hz: "生产", py: "shēngchǎn", type: "Danh/Động từ", vi: "Sản xuất", tip: "生 (Sinh): Hình ảnh mầm cây mọc lên từ đất. Nghĩa là sinh ra. 产 (Sản): Phía dưới là bộ 厂 (Hán - vách đá/nhà xưởng), trên là trí tuệ. Mẹo nhớ: Làm việc trong nhà xưởng (厂) để tạo ra (生) sản phẩm.", ex: "进行生产 (Tiến hành sản xuất)" },
+            { hz: "之前 / 后", py: "zhīqián / hòu", type: "Danh từ TG", vi: "Trước khi / Sau khi", tip: "之 (Chi): Chữ này ngày xưa giống hình cái chân đang bước đi. 前 (Tiền): Dưới có bộ 刂 (Đao - con dao) và bộ 月 (nhục - miếng thịt). Mẹo nhớ: Ngày xưa cắt thịt (月) bằng dao (刂) phải thực hiện phía 'trước' mặt. 后 (Hậu): Gồm bộ 口 (Khẩu - cái miệng). Mẹo nhớ: Người ra lệnh bằng miệng (口) thường đứng sau để điều hành.", ex: "下班之后 (Sau khi tan ca)" },
+            { hz: "必须", py: "bìxū", type: "Phó từ", vi: "Bắt buộc phải", tip: "必 (Tất): Giống một nhát đâm xuyên qua trái tim (心). Mẹo nhớ: Đã khắc sâu vào tim thì 'tất yếu' phải làm. 须 (Tu): Bên trái là 彡 (Sam - râu/tóc), bên phải là bộ 页 (Hiệt - cái đầu). Mẹo nhớ: Đàn ông đến tuổi thì đầu (页) 'cần' phải mọc râu (彡).", ex: "你必须去 (Bạn bắt buộc phải đi)" },
+            { hz: "找", py: "zhǎo", type: "Động từ", vi: "Tìm, kiếm", tip: "找 (Trảo): Bên trái là bộ 扌 (Thủ - cái tay), bên phải là chữ 戈 (Qua - cái mác/vũ khí). Mẹo nhớ: Tay (扌) cầm vũ khí (戈) đi tìm kẻ địch.", ex: "去找经理 (Đi tìm giám đốc)" },
+            { hz: "品管", py: "pǐnguǎn", type: "Danh từ", vi: "QC (Quản lý CL)", tip: "品 (Phẩm): Ba bộ 口 (Khẩu - cái miệng) xếp chồng lên nhau. Mẹo nhớ: Nhiều cái miệng cùng nếm thử thì mới đánh giá được 'phẩm' chất sản phẩm. 管 (Quản): Trên có bộ 竹 (Trúc - tre), dưới là chữ 官 (Quan - quan lại). Mẹo nhớ: Quan lại (官) ngày xưa dùng thẻ tre (竹) để 'quản' lý sổ sách.", ex: "品管检查 (QC kiểm tra)" },
+            { hz: "来", py: "lái", type: "Động từ", vi: "Đến", tip: "来 (Lai): Hình ảnh một bông lúa mì. Mẹo nhớ: Cây lúa mì từ phương xa 'đến' Trung Quốc, nên lấy hình ảnh này để chỉ sự di chuyển đến.", ex: "他来确认 (Anh ấy đến xác nhận)" },
+            { hz: "确认", py: "quèrèn", type: "Động từ", vi: "Xác nhận", tip: "确 (Xác): Bên trái là bộ 石 (Thạch - viên đá). Sự thật cứng như đá (石) là 'chính xác'. 认 (Nhận): Dùng lời nói (讠) của con người (人) để thừa 'nhận'.", ex: "确认数据 (Xác nhận dữ liệu)" },
+            { hz: "没有", py: "méiyǒu", type: "Động từ", vi: "Không có", tip: "没 (Một): Bên trái là bộ 氵 (Thủy - nước), bên phải là chữ 殳 (binh khí). Mẹo nhớ: Vật rơi xuống nước (氵) bị chìm mất là 'không còn/không có'. 有 (Hữu): Trên là bộ ナ (Thủ - bàn tay), dưới là bộ 月 (Nhục - miếng thịt). Mẹo nhớ: Tay (ナ) cầm miếng thịt (月) là 'có' tài sản.", ex: "没有问题 (Không có vấn đề)" },
+            { hz: "问题", py: "wèntí", type: "Danh từ", vi: "Vấn đề", tip: "问 (Vấn): Đứng ở cửa (门) dùng miệng (口) để 'hỏi'. 题 (Đề): Những trang giấy (页) ghi lại những điều đúng (是) gọi là tiêu 'đề'.", ex: "有问题吗？ (Có vấn đề gì không?)" },
+            { hz: "才", py: "cái", type: "Phó từ", vi: "Mới", tip: "才 (Tài): Hình ảnh mầm cây vừa mới nhú lên. Nghĩa là 'vừa mới/mới'.", ex: "现在才三点 (Bây giờ mới 3 giờ)" },
+            { hz: "可以", py: "Động từ NV", vi: "Có thể", tip: "可 (Khả): Gồm bộ 口 (Khẩu) và nét vẽ một cái rìu. Mẹo nhớ: Dùng miệng (口) nói ra lời đồng ý thì là 'có thể'. 以 (Dĩ): Hình ảnh một người đang dùng công cụ để làm việc.", ex: "我可以去 (Tôi có thể đi)" },
+            { hz: "进行", py: "jìnxíng", type: "Động từ", vi: "Tiến hành", tip: "进 (Tiến): Bên ngoài là bộ 辶 (Sước - bước chân đi), bên trong là bộ 井 (Tỉnh - cái giếng). Mẹo nhớ: Bước chân đi tới cái giếng để 'tiến' lên phía trước. 行 (Hành): Hình ảnh một ngã tư đường. Nghĩa là đi/làm.", ex: "进行测试 (Tiến hành thử nghiệm)" },
+            { hz: "这个", py: "zhège", type: "Đại từ", vi: "Cái này", tip: "这 (Giá): Bộ 辶 (Sước - đi) và chữ 文 (Văn). Chỉ vật ở gần hướng mình đi. 个 (Cá): Hình ảnh một nửa của chữ Trúc (tre), dùng làm lượng từ chỉ từng 'cái'.", ex: "这个工单 (Đơn hàng này)" },
+            { hz: "工单", py: "gōngdān", type: "Danh từ", vi: "Đơn hàng", tip: "工 (Công): Hình ảnh chiếc thước thợ. Chỉ công việc. 单 (Đơn): Hình ảnh một chiếc ná bắn chim. Nghĩa gốc là lẻ loi/một mình (đơn độc).", ex: "看工单 (Xem đơn hàng)" },
+            { hz: "已经", py: "yǐjīng", type: "Phó từ", vi: "Đã", tip: "已 (Dĩ): Hình ảnh một bào thai đã hình thành xong. Nghĩa là 'đã/kết thúc'. 经 (Kinh): Bên trái là bộ 纟 (Mịch - sợi tơ). Nghĩa là những sợi tơ trải dài (kinh qua).", ex: "已经做完 (Đã làm xong)" },
+            { hz: "做", py: "zuò", type: "Động từ", vi: "Làm", tip: "做 (Tố): Bên trái là bộ 亻 (Nhân - người), giữa là bộ 十 (Thập), phải là bộ 攵 (Phộc - đánh khẽ/làm việc). Mẹo nhớ: Con người (亻) phải bắt tay vào làm việc (攵).", ex: "正在做 (Đang làm)" },
+            { hz: "久", py: "jiǔ", type: "Tính từ", vi: "Lâu", tip: "久 (Cửu): Hình ảnh một người đi chậm, có vật gì đó kéo lại phía sau nên đi rất 'lâu'.", ex: "等了很久 (Đợi rất lâu)" },
+            { hz: "很", py: "hěn", type: "Phó từ", vi: "Rất", tip: "很 (Hẩn): Bên trái là bộ 彳 (Xích - bước chân trái), bên phải là chữ 艮 (Cấn - cứng/dừng lại). Mẹo nhớ: Đi đường mà gặp vật cản rất cứng (艮) thì phải cố 'rất' nhiều.", ex: "很大 (Rất lớn)" },
+            { hz: "了", py: "le", type: "Trợ từ", vi: "Rồi", tip: "了 (Liễu): Hình ảnh một đứa trẻ bị bó chân tay (đã hoàn thành việc bao bọc).", ex: "下班了 (Tan ca rồi)" },
+            { hz: "你", py: "nǐ", type: "Đại từ", vi: "Bạn", tip: "你 (Nhĩ): Bộ 亻 (Nhân - người) và chữ 尔 (Nhĩ - mày/bạn).", ex: "你告诉我 (Bạn nói cho tôi)" },
+            { hz: "告诉", py: "gàosù", type: "Động từ", vi: "Nói cho biết", tip: "告 (Cáo): Miệng (口) báo cáo về con bò (牛). 诉 (Tố): Dùng lời nói (讠) để báo lại lỗi sai.", ex: "告诉我状况 (Nói cho tôi tình trạng)" },
+            { hz: "我", py: "wǒ", type: "Đại từ", vi: "Tôi", tip: "我 (Ngã): Hình ảnh một loại vũ khí cổ (cây mác). Nghĩa là 'tôi' (người cầm vũ khí bảo vệ bản thân).", ex: "我是阮文A (Tôi là Nguyễn Văn A)" },
+            { hz: "结单", py: "jiédān", type: "Động từ", vi: "Kết đơn", tip: "结 (Kết): Bộ 纟 (Mịch - sợi tơ) và chữ 吉 (Cát - tốt lành). Mẹo nhớ: Dùng sợi tơ (纟) thắt nút lại cho tốt đẹp (吉) là 'kết thúc'.", ex: "今天结单 (Hôm nay chốt đơn)" },
+            { hz: "状况", py: "zhuàngkuàng", type: "Danh từ", vi: "Tình trạng", tip: "状 (Trạng): Bên trái là bộ 爿 (Tường - mảnh gỗ), bên phải là bộ 犬 (Khuyển - con chó). Mẹo nhớ: Hình dáng/tình trạng của con chó (犬) bên mảnh gỗ. 况 (Huống): Bên trái là bộ 冫 (Băng - nước đá), bên phải là bộ 口 (Khẩu).", ex: "机器状况 (Tình trạng máy)" },
+            { hz: "怎么样", py: "zěnmeyàng", type: "Đại từ NV", vi: "Như thế nào", tip: "怎 (Chẩm): Trên là 乍 (Sạ - bỗng nhiên), dưới là bộ 心 (Tâm). Tâm trạng bỗng nhiên thấy lạ nên hỏi 'sao vậy/thế nào'. 样 (Dạng): Bên trái là bộ 木 (Mộc - gỗ), bên phải là chữ 羊 (Dương - con cừu). Con cừu bằng gỗ là hình 'dạng'.", ex: "状况怎么样 (Tình trạng thế nào)" },
+            { hz: "呢 / 吗", py: "ne / ma", type: "Trợ từ NV", vi: "Nhé / không?", tip: "Cả hai đều có bộ 口 (Khẩu - miệng) vì là trợ từ dùng để nói/hỏi.", ex: "你好吗？ (Bạn khỏe không?)" },
+            { hz: "明天", py: "míngtiān", type: "Danh từ TG", vi: "Ngày mai", tip: "明 (Minh): Bộ 日 (Nhật - mặt trời) và bộ 月 (Nguyệt - mặt trăng). Cả hai cùng chiếu sáng thì là 'sáng sủa/ngày mai'. 天 (Thiên): Chữ 大 (Đại - người lớn) có một gạch trên đầu. Cái trên đầu người là 'Trời'.", ex: "明天上班 (Ngày mai đi làm)" },
+            { hz: "有", py: "yǒu", type: "Động từ", vi: "Có", tip: "Tay cầm miếng thịt là 'có' (đã giải thích ở câu 9: bộ bàn tay ナ và bộ nhục 月).", ex: "有客人 (Có khách)" },
+            { hz: "客人", py: "kèrén", type: "Danh từ", vi: "Khách hàng", tip: "客 (Khách): Trên là bộ 宀 (Miên - mái nhà), dưới là bộ 口 (Khẩu) và bộ 夂 (Truy - đi đến). Mẹo nhớ: Người đi đến (夂) dùng miệng (口) chào hỏi dưới mái nhà (宀) là 'khách'.", ex: "重要的客人 (Khách hàng quan trọng)" },
+            { hz: "检查", py: "jiǎnchá", type: "Động/Danh", vi: "Kiểm tra", tip: "Kiểm: Dùng thước gỗ (木) đối chiếu hàng hóa.", ex: "检查产品 (Kiểm tra sản phẩm)" },
+            { hz: "要求", py: "yāoqiú", type: "Động/Danh", vi: "Yêu cầu", tip: "要 (Yêu/Yếu): Trên là bộ 覀 (Á - cái che), dưới là bộ 女 (Nữ). Người phụ nữ cần được che chở là điều 'quan yếu/cần thiết'. 求 (Cầu): Hình ảnh dòng nước chảy. Nghĩa là mong cầu/tìm kiếm.", ex: "你的要求 (Yêu cầu của bạn)" },
+            { hz: "你们", py: "nǐmen", type: "Đại từ", vi: "Các bạn", tip: "们 (Môn): Bộ 亻 (Nhân - người) đứng bên cái cửa (门). Chỉ số nhiều của người.", ex: "你们好 (Chào các bạn)" },
+            { hz: "干部", py: "gànbù", type: "Danh từ", vi: "Cán bộ", tip: "干 (Cán): Hình ảnh một loại vũ khí hoặc cái xẻng làm việc. 部 (Bộ): Bên phải là bộ 阝 (Ấp - vùng đất/đơn vị). Một đơn vị công tác.", ex: "生产干部 (Quản lý sản xuất)" },
+            { hz: "安排", py: "ānpái", type: "Động từ", vi: "Sắp xếp", tip: "An: Người phụ nữ trong nhà thì an. Bài: Dùng tay (扌) xếp hàng.", ex: "安排加班 (Sắp xếp tăng ca)" },
+            { hz: "工人", py: "gōngrén", type: "Danh từ", vi: "Công nhân", tip: "Người (人) làm công việc (工).", ex: "工厂工人 (Công nhân nhà máy)" },
+            { hz: "提前", py: "tíqián", type: "Phó từ", vi: "Trước, sớm hơn", tip: "提 (Đề): Bộ 扌 (Thủ - tay) và chữ 是 (Thị). Dùng tay nhấc vật gì đó lên cao (đề bạt/đề cập).", ex: "提前五分钟 (Sớm hơn 5 phút)" },
+            { hz: "分钟", py: "fēnzhōng", type: "Lượng từ", vi: "Phút", tip: "分 (Phân): Trên là bộ 八 (Bát - số 8/chia ra), dưới là bộ 刀 (Đao). Dùng dao chia vật ra làm đôi gọi là 'phân chia'. 钟 (Chung): Bên trái là bộ 钅 (Kim - kim loại), bên phải là chữ 中 (Trung). Cái chuông bằng kim loại để đo thời gian.", ex: "十分鐘 (10 phút)" },
+            { hz: "停线", py: "tíngxiàn", type: "Động từ", vi: "Dừng chuyền", tip: "停 (Đình): Bộ 亻 (Nhân) đứng bên cái đình (亭). Người đứng nghỉ ở cái đình gọi là 'dừng lại'. 线 (Tuyến): Bộ 纟 (Mịch - sợi tơ). Chỉ đường dây/chuyền sản xuất.", ex: "立刻停线 (Dừng chuyền ngay)" },
+            { hz: "厂区", py: "chǎngqū", type: "Danh từ", vi: "Khu vực xưởng", tip: "区 (Khu): Bộ 匚 (Hệ - vật chứa) bên trong có chữ X. Chỉ một vùng được giới hạn.", ex: "在厂区里 (Ở trong xưởng)" },
+            { hz: "整理", py: "zhěnglǐ", type: "Động từ", vi: "Chỉnh đốn", tip: "整 (Chỉnh): Trên có chữ 正 (Chính - ngay ngắn). Làm cho ngay ngắn. 理 (Lý): Bên trái là bộ 王 (Vương - viên ngọc), bên phải là chữ 里 (Lý - dặm/trong). Mài giũa viên ngọc theo đường vân của nó gọi là 'lý'.", ex: "整理厂区 (Dọn dẹp xưởng)" },
+            { hz: "今天", py: "jīntiān", type: "Danh từ TG", vi: "Hôm nay", tip: "今 (Kim): Hình ảnh một người đang cúi đầu, chỉ thời điểm hiện tại.", ex: "今天加班 (Hôm nay tăng ca)" },
+            { hz: "上班", py: "shàngbān", type: "Động từ", vi: "Đi làm", tip: "上 (Thượng): Một nét gạch nằm trên một trục. Chỉ phía 'trên/lên'.", ex: "几点上班 (Mấy giờ đi làm)" },
+            { hz: "忘记", py: "wàngjì", type: "Động từ", vi: "Quên", tip: "Vong (亡): Mất mát. Ký (记): Dùng ngôn từ (讠) khắc ghi (己). Mẹo nhớ: Tim (心) bị mất (亡) là quên.", ex: "忘记打卡 (Quên quẹt thẻ)" },
+            { hz: "打卡", py: "dǎkǎ", type: "Động từ", vi: "Quẹt thẻ", tip: "打 (Đả): Dùng tay (扌) tác động lực. 卡 (Tạp/Ca): Gồm chữ 上 (Trên) và 下 (Dưới). Vật bị kẹt ở giữa trên và dưới gọi là cái 'thẻ/cạc'.", ex: "记得打卡 (Nhớ quẹt thẻ)" },
+            { hz: "人事", py: "rénshì", type: "Danh từ", vi: "Nhân sự", tip: "事 (Sự): Hình ảnh một bàn tay cầm cây bút ghi chép công việc.", ex: "去找人事 (Tìm phòng nhân sự)" },
+            { hz: "通知", py: "tōngzhī", type: "Động/Danh", vi: "Thông báo", tip: "通 (Thông): Bộ 辶 (Sước - đi) và chữ 甬 (Dũng). Đi lại thông suốt. 知 (Tri): Bộ 矢 (Thỉ - mũi tên) và bộ 口 (Khẩu). Lời nói sắc bén như mũi tên chỉ sự 'hiểu biết'.", ex: "收到通知 (Nhận thông báo)" },
+            { hz: "下午", py: "xiàwǔ", type: "Danh từ TG", vi: "Buổi chiều", tip: "下 (Hạ): Ngược lại với chữ 上, chỉ phía 'dưới'. 午 (Ngọ): Hình ảnh cái chày giã gạo. Chỉ giữa trưa.", ex: "下午三点 (3 giờ chiều)" },
+            { hz: "三点", py: "sāndiǎn", type: "Số + Lượng", vi: "3 giờ", tip: "三 (Tam): Ba gạch ngang. 点 (Điểm): Trên là bộ 占 (Chiêm - chiếm đóng), dưới là bộ 灬 (Hỏa - lửa).", ex: "现在三点 (Bây giờ 3 giờ)" },
+            { hz: "提交", py: "tíjiāo", type: "Động từ", vi: "Nộp", tip: "交 (Giao): Hình ảnh một người bắt chéo chân. Chỉ sự trao đổi/giao nộp.", ex: "提交名单 (Nộp danh sách)" },
+            { hz: "补卡单", py: "bǔkǎdān", type: "Danh từ", vi: "Đơn bù thẻ", tip: "补 (Bổ): Bên trái là bộ 衤 (Y - quần áo), bên phải là chữ 卜 (Bốc - dự đoán). Vá lại quần áo bị rách gọi là 'bổ sung/bù'.", ex: "填补卡单 (Điền đơn bù thẻ)" },
+            { hz: "给", py: "gěi", type: "Giới từ", vi: "Cho", tip: "给 (Cấp): Bộ 纟 (Mịch - tơ) và chữ 合 (Hợp). Kết hợp sợi tơ lại để cung 'cấp' cho ai đó.", ex: "交给经理 (Nộp cho giám đốc)" },
+            { hz: "他们", py: "tāmen", type: "Đại từ", vi: "Họ", tip: "他 (Tha): Bộ 亻 (Nhân) và chữ 也 (Dã - cũng). Người khác.", ex: "他们是谁 (Họ là ai)" },
+            { hz: "今晚", py: "jīnwǎn", type: "Danh từ TG", vi: "Tối nay", tip: "晚 (Vãn): Bộ 日 (Nhật - mặt trời) và chữ 免 (Miễn). Mặt trời đi 'miễn' cưỡng (lặn xuống) là buổi 'tối'.", ex: "今晚加班 (Tối nay tăng ca)" },
+            { hz: "所有", py: "suǒyǒu", type: "Tính từ", vi: "Tất cả", tip: "所 (Sở): Bên trái là bộ 户 (Hộ - cái cửa), bên phải là bộ 斤 (Cân - cái rìu). Nơi dùng rìu đẽo gỗ làm cửa gọi là 'địa sở/nơi chốn'.", ex: "所有工人 (Tất cả công nhân)" },
+            { hz: "加班", py: "jiābān", type: "Động từ", vi: "Tăng ca", tip: "Gia: Thêm sức lực (力). Ban: Dùng miệng (口) hô hào.", ex: "经常加班 (Thường xuyên tăng ca)" },
+            { hz: "线长", py: "xiànzhǎng", type: "Danh từ", vi: "Chuyền trưởng", tip: "长 (Trường/Trưởng): Hình ảnh một người tóc dài. Chỉ người đứng đầu.", ex: "问线长 (Hỏi chuyền trưởng)" },
+            { hz: "名单", py: "míngdān", type: "Danh từ", vi: "Danh sách", tip: "名 (Danh): Trên là bộ 夕 (Tịch - buổi tối), dưới là bộ 口 (Khẩu). Buổi tối tối trời không nhìn thấy nhau phải dùng miệng gọi 'tên' (danh).", ex: "加班名单 (Danh sách tăng ca)" },
+            { hz: "助理", py: "zhùlǐ", type: "Danh từ", vi: "Trợ lý", tip: "助 (Trợ): Bên trái là chữ 且 (Thả), bên phải là bộ 力 (Lực). Dùng sức lực (力) giúp đỡ.", ex: "经理助理 (Trợ lý giám đốc)" },
+            { hz: "让", py: "ràng", type: "Động từ", vi: "Để cho, bảo", tip: "让 (Nhượng): Bộ 讠 (Ngôn) và chữ 上 (Thượng). Dùng lời nói để nhường nhịn/cho phép.", ex: "让他去 (Để anh ấy đi)" },
+            { hz: "汇总", py: "huìzǒng", type: "Động từ", vi: "Tổng hợp", tip: "汇 (Hối): Bộ 匚 (Hệ) bên trong có bộ 氵 (Thủy). Nước chảy vào bồn chứa gọi là 'tập hợp/hối tụ'. 总 (Tổng): Trên là bộ 丷 (Bát), giữa là bộ 口 (Khẩu), dưới là bộ 心 (Tâm).", ex: "汇总名单 (Tổng hợp danh sách)" },
+            { hz: "拿", py: "ná", type: "Động từ", vi: "Cầm, mang", tip: "拿 (Nã): Trên là chữ 合 (Hợp), dưới là bộ 手 (Thủ - tay). Chắp tay (手) '合' (合) lại để 'cầm/nắm' vật gì đó.", ex: "拿过来 (Mang qua đây)" },
+            { hz: "经理", py: "jīnglǐ", type: "Danh từ", vi: "Giám đốc", tip: "经 (Kinh): Những sợi tơ kéo dài. Chỉ sự quản lý/trải qua.", ex: "王经理 (Giám đốc Vương)" },
+            { hz: "签字", py: "qiānzì", type: "Động từ", vi: "Ký tên", tip: "签 (Thiêm): Trên có bộ 竹 (Trúc - tre), dưới là chữ 佥 (Thiêm). Ngày xưa ký tên trên thẻ tre. 字 (Tự): Trên là bộ 宀 (Miên - mái nhà), dưới là bộ 子 (Tử - con cái). Sinh con dưới mái nhà là việc hệ trọng cần đặt 'chữ/tên'.", ex: "在这里签字 (Ký tên tại đây)" },
+            { hz: "阿清", py: "Ā Qīng", type: "Danh riêng", vi: "A Thanh", tip: "Tên người cụ thể.", ex: "找阿清 (Tìm A Thanh)" },
+            { hz: "表现", py: "biǎoxiàn", type: "Động/Danh", vi: "Thể hiện", tip: "表 (Biểu): Hình ảnh bộ quần áo lông thú mặc bên ngoài. Chỉ sự lộ ra ngoài. 现 (Hiện): Bên trái là bộ 王 (Vương - ngọc), bên phải là chữ 见 (Kiến - nhìn thấy). Viên ngọc phát sáng cho ta nhìn thấy gọi là 'hiện diện'.", ex: "表现优秀 (Thể hiện ưu tú)" },
+            { hz: "特别", py: "tèbié", type: "Phó từ", vi: "Đặc biệt", tip: "特 (Đặc): Bên trái là bộ 牛 (Ngưu - con bò), bên phải là chữ 寺 (Tự - ngôi chùa). Con bò quý trong chùa là vật 'đặc biệt'. 别 (Biệt): Bên phải là bộ 刂 (Đao). Dùng dao chia tách ra là 'ly biệt/khác biệt'.", ex: "特别表扬 (Đặc biệt khen ngợi)" },
+            { hz: "表扬", py: "biǎoyáng", type: "Động từ", vi: "Biểu dương", tip: "扬 (Dương): Bộ 扌 (Thủ - tay) và chữ 昜 (Dương - ánh sáng). Giơ tay lên cao để ánh sáng chiếu vào cho mọi người thấy là 'biểu dương'.", ex: "被表扬 (Được khen ngợi)" },
+            { hz: "获得", py: "huòdé", type: "Động từ", vi: "Đạt được", tip: "获 (Hoạch): Trên là bộ 艹 (Thảo - cỏ), dưới có bộ 犬 (Khuyển - chó) và 隹 (Chuy lùn - chim). Con chó săn được chim trong cỏ là 'thu hoạch'. 得 (Đắc): Bên trái là bộ 彳 (Xích), giữa là 旦 (Đán), dưới là 寸 (Thốn).", ex: "获得奖金 (Đạt được tiền thưởng)" },
+            { hz: "评价", py: "píngjià", type: "Động/Danh", vi: "Đánh giá", tip: "评 (Bình): Dùng lời nói (讠) để làm cho mọi việc công bằng (平). 价 (Giá): Con người (亻) định ra giá trị cho vật dụng.", ex: "高评价 (Đánh giá cao)" },
+            { hz: "底薪", py: "dǐxīn", type: "Danh từ", vi: "Lương cơ bản", tip: "底 (Đáy): Dưới mái nhà (广) có người đang cúi xuống chạm đất. Nghĩa là 'đáy/nền tảng'. 薪 (Tân): Bộ 艹 (Thảo - cỏ/củi). Ngày xưa đi kiếm củi đổi lấy tiền công nên 'củi' nghĩa là 'lương'.", ex: "涨底薪 (Tăng lương cơ bản)" },
+            { hz: "上涨", py: "shàngzhǎng", type: "Động từ", vi: "Tăng lên", tip: "涨 (Trướng): Bộ 氵 (Thủy - nước) và chữ 张 (Trương - căng ra). Nước dâng lên làm căng bề mặt gọi là 'tăng vọt'.", ex: "底薪上涨 (Lương tăng)" },
+            { hz: "在...上", py: "zài...shàng", type: "Cấu trúc", vi: "Trên phạm vi", tip: "Trên bề mặt hoặc phạm vi nào đó.", ex: "在工作上 (Trên phương diện công việc)" },
+            { hz: "操作", py: "cāozuò", type: "Động/Danh", vi: "Thao tác", tip: "操 (Thao): Bộ 扌 (Thủ - tay) và chữ 品 (Phẩm). Tay cầm nắm các vật phẩm để điều khiển. 作 (Tác): Con người (亻) đứng ra 'tác' động làm việc.", ex: "操作机台 (Thao tác máy)" },
+            { hz: "与", py: "yǔ", type: "Giới từ", vi: "Với, và", tip: "Kết nối các thành phần với nhau.", ex: "你与我 (Bạn và tôi)" },
+            { hz: "实际", py: "shíjì", type: "Tính/Danh", vi: "Thực tế", tip: "实 (Thực): Dưới mái nhà (宀) có tiền của (贝) là sự thật 'thực' tế. 际 (Tế): Bộ 阝 (Ấp) và chữ 祭 (Tế - cúng tế).", ex: "实际情况 (Tình hình thực tế)" },
+            { hz: "不一样", py: "bù yīyàng", type: "Cấu trúc", vi: "Không giống nhau", tip: "Sự khác biệt giữa hai đối tượng.", ex: "他们不一样 (Họ không giống nhau)" },
+            { hz: "请", py: "qǐng", type: "Động từ", vi: "Mời", tip: "Dùng lời nói (讠) một cách trong sáng, xanh tươi (青) để 'mời'.", ex: "请进 (Mời vào)" },
+            { hz: "是否", py: "shìfǒu", type: "Phó từ", vi: "Có phải... không", tip: "否 (Phủ): Miệng (口) nói không (不) là 'phủ' định.", ex: "是否需要 (Có cần không)" },
+            { hz: "需要", py: "xūyào", type: "Động từ", vi: "Cần", tip: "需 (Nhu): Trên có bộ 雨 (Vũ - mưa). Khi trời mưa, con người rất 'cần' nơi trú ẩn.", ex: "我需要你 (Tôi cần bạn)" },
+            { hz: "修改", py: "xiūgǎi", type: "Động từ", vi: "Sửa đổi", tip: "修 (Tu): Người (亻) dùng tay trang trí lại cho đẹp. 改 (Cải): Bộ 己 (Kỷ - bản thân) và bộ 攵 (Phộc - đánh khẽ). Tự đánh khẽ vào mình để 'sửa' lỗi.", ex: "修改报告 (Sửa báo cáo)" },
+            { hz: "将", py: "jiāng", type: "Giới từ", vi: "Đem, lấy", tip: "Bên trái là bộ 爿 (Tường - mảnh gỗ), bên phải là bộ 寸 (Thốn - tấc/tay). Tay cầm mảnh gỗ để thực hiện hành động.", ex: "将书给我 (Đem sách cho tôi)" },
+            { hz: "物料", py: "wùliào", type: "Danh từ", vi: "Vật liệu", tip: "物 (Vật): Bộ 牛 (Ngưu - con bò) và chữ 勿 (Vật). 料 (Liệu): Bộ 米 (Mễ - gạo) và bộ 斗 (Đấu). Đong gạo để tính toán nguyên 'liệu'.", ex: "准备物料 (Chuẩn bị vật liệu)" },
+            { hz: "放入", py: "fàngrù", type: "Động từ", vi: "Cho vào", tip: "放 (Phóng): Bộ 方 (Phương - phương hướng) và bộ 攵 (Phộc). Buông tay cho vật đi theo một hướng nào đó.", ex: "放入框里 (Cho vào khay)" },
+            { hz: "机台", py: "jītái", type: "Danh từ", vi: "Máy móc", tip: "机 (Cơ): Bộ 木 (Mộc - gỗ) và chữ 几 (Kỷ). Ngày xưa máy dệt làm bằng gỗ. 台 (Đài): Trên là bộ 厶 (Khứ), dưới là bộ 口 (Khẩu). Một cái bệ cao.", ex: "操作机台 (Thao tác máy)" },
+            { hz: "负责", py: "fùzé", type: "Động từ", vi: "Phụ trách", tip: "负 (Phụ): Trên là 刀 (Đao), dưới là 贝 (Bối - tiền). Vác tiền trên lưng. 责 (Trách): Trên là 主 (Chủ), dưới là 贝 (Bối). Trách nhiệm giữ tiền.", ex: "谁负责？ (Ai phụ trách?)" },
+            { hz: "全检", py: "quánjiǎn", type: "Động/Danh", vi: "Kiểm tra toàn bộ", tip: "全 (Toàn): Trên là bộ 人 (Nhân), dưới là bộ 王 (Vương). Người đứng đầu (Vua) cai quản 'toàn' bộ.", ex: "进行全检 (Tiến hành kiểm tra tổng)" },
+            { hz: "包含", py: "bāohán", type: "Động từ", vi: "Bao gồm", tip: "包 (Bao): Hình ảnh thai nhi được bao bọc. 含 (Hàm): Trên có chữ 今 (Kim), dưới có bộ 口 (Khẩu). Ngậm trong miệng ngay lúc này.", ex: "包含运费 (Bao gồm phí vận chuyển)" }
+        ];
+
+        let state = {
+            tab: 'library', score: 0, cardIndex: 0, showHz: true, showPy: true, showEx: true,
+            searchQuery: "", flashcardList: [...vocabulary], typingHzList: [...vocabulary], typingViList: [...vocabulary],
+            typingHzIndex: 0, typingViIndex: 0, memoryInputs: {}, startTime: Date.now()
+        };
+
+        let writers = []; let flashWriters = []; let isWritingFlash = false;
+
+        function updateTimer() {
+            const diff = Math.floor((Date.now() - state.startTime) / 1000);
+            const h = Math.floor(diff / 3600).toString().padStart(2, '0');
+            const m = Math.floor((diff % 3600) / 60).toString().padStart(2, '0');
+            const s = (diff % 60).toString().padStart(2, '0');
+            const el = document.getElementById('study-timer'); if (el) el.innerText = `${h}:${m}:${s}`;
+        }
+        setInterval(updateTimer, 1000);
+
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const ut = new SpeechSynthesisUtterance(text); ut.lang = 'zh-CN'; ut.rate = 0.82; window.speechSynthesis.speak(ut); return true;
+            } return false;
+        }
+
+        function launchFireworks() { confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 }, colors: ['#bc241c', '#d4af37', '#ffffff'] }); }
+
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; }
+            return arr;
+        }
+
+        function switchTab(tab) {
+            state.tab = tab; isWritingFlash = false;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                const label = btn.innerText.toLowerCase();
+                const target = tab==='library'?'thư viện':tab==='tips'?'mẹo':tab==='typingHz'?'hán':tab==='typingVi'?'việt':tab==='flashcard'?'flashcard':'trắc';
+                btn.className = label.includes(target) ? "tab-btn flex-1 min-w-[100px] py-3 rounded-xl font-bold transition-all bg-white text-red-800 shadow-lg border-b-4 border-red-800" : "tab-btn flex-1 min-w-[100px] py-3 rounded-xl font-bold transition-all bg-white/50 text-gray-600";
+            });
+            render();
+        }
+
+        function handleMemoryCheck(inp, correct) {
+            const val = inp.value.trim(); state.memoryInputs[correct] = val;
+            if (val === correct) {
+                inp.classList.remove('wrong'); inp.classList.add('correct'); speak("对"); launchFireworks(); state.score += 5; document.getElementById('score-val').innerText = state.score;
+            } else {
+                let isCorr = true; for (let i = 0; i < val.length; i++) { if (val[i] !== correct[i]) { isCorr = false; break; } }
+                if (!isCorr || val.length >= correct.length) { inp.classList.remove('correct'); inp.classList.add('wrong'); speak("不对"); }
+                else inp.classList.remove('correct', 'wrong');
+            }
+        }
+
+        function render() {
+            const body = document.getElementById('app-body'); body.innerHTML = '';
+            if (state.tab === 'library') renderLibrary(body);
+            else if (state.tab === 'tips') renderTips(body);
+            else if (state.tab === 'typingHz') renderTypingHz(body);
+            else if (state.tab === 'typingVi') renderTypingVi(body);
+            else if (state.tab === 'flashcard') renderFlashcard(body);
+            else if (state.tab === 'quiz') renderQuiz(body);
+        }
+
+        function renderLibrary(container) {
+            container.innerHTML = `<div class="w-full bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 animate-fadeIn"><div class="bg-red-800 p-5 text-white flex flex-wrap justify-between items-center gap-4"><h2 class="font-bold text-lg">Thư viện Mê học trung</h2><input type="text" id="lib-search" placeholder="Gõ Chữ Hán, Pinyin hoặc Nghĩa..." class="search-box w-full max-sm" value="${state.searchQuery}"></div><div class="max-h-[65vh] overflow-y-auto scroll-custom"><table class="w-full text-left border-collapse min-w-[1300px]"><thead class="bg-gray-100 text-[11px] uppercase text-gray-500 sticky top-0 z-10 shadow-sm font-bold"><tr><th class="p-4">Chữ Hán <button class="toggle-btn" onclick="state.showHz=!state.showHz; updateTableOnly()">Ẩn/Hiện</button></th><th class="p-4">Pinyin <button class="toggle-btn" onclick="state.showPy=!state.showPy; updateTableOnly()">Ẩn/Hiện</button></th><th class="p-4">Loại từ</th><th class="p-4">Nghĩa Việt</th><th class="p-4">Ví dụ <button class="toggle-btn" onclick="state.showEx=!state.showEx; updateTableOnly()">Ẩn/Hiện</button></th><th class="p-4 text-center">Tập viết</th><th class="p-4 text-center">Nghe</th><th class="p-4 text-center text-red-800">Nhớ chữ</th></tr></thead><tbody id="lib-tbody" class="divide-y divide-gray-50 text-sm"></tbody></table></div></div>`;
+            const searchInput = document.getElementById('lib-search');
+            searchInput.addEventListener('input', (e) => { state.searchQuery = e.target.value; updateTableOnly(); });
+            updateTableOnly();
+        }
+
+        function updateTableOnly() {
+            const tbody = document.getElementById('lib-tbody'); if (!tbody) return;
+            const q = state.searchQuery.toLowerCase();
+            const filtered = vocabulary.filter(v => v.hz.includes(q) || v.py.toLowerCase().includes(q) || v.vi.toLowerCase().includes(q));
+            tbody.innerHTML = filtered.map(w => { 
+                const ex = parseExample(w.ex); const savedVal = state.memoryInputs[w.hz] || "";
+                return `<tr class="hover:bg-yellow-50 transition border-b border-gray-100"><td class="p-4 chinese-font text-2xl font-bold text-red-800 ${state.showHz?'':'hidden-content'}">${w.hz}</td><td class="p-4 text-gray-500 italic ${state.showPy?'':'hidden-content'}">${w.py}</td><td class="p-4 font-semibold text-blue-600 uppercase text-[10px]">${w.type || '-'}</td><td class="p-4 font-bold text-gray-700">${w.vi}</td><td class="p-4 min-w-[320px]"><div class="flex items-start gap-2 bg-red-50/50 p-2 rounded-lg border border-red-100/50 ${state.showEx?'':'hidden-content'}"><div class="flex flex-col flex-1"><span class="chinese-font font-bold text-gray-800">${ex.hz}</span><span class="text-[10px] text-gray-500 italic">${ex.py}</span><span class="text-[11px] text-red-800 font-semibold mt-1">${ex.vi}</span></div><button onclick="speak('${ex.hz}')" class="text-red-400 p-1">🔊</button></div></td><td class="p-4 text-center"><button onclick="openWritingModal('${w.hz}', '${w.py}')" class="text-china-gold hover:scale-125 transition text-xl">🖊️</button></td><td class="p-4 text-center"><button onclick="speak('${w.hz}')" class="bg-red-50 p-2 rounded-full text-red-600 shadow-sm">🔊</button></td><td class="p-4 text-center"><input type="text" value="${savedVal}" placeholder="..." oninput="handleMemoryCheck(this, '${w.hz}')" class="memory-input"></td></tr>`}).join('');
+        }
+
+        function renderTips(container) {
+            container.innerHTML = `
+                <div class="w-full max-w-4xl animate-fadeIn">
+                    <h2 class="text-2xl font-bold text-red-800 mb-6 text-center">💡 Mẹo Nhớ Chữ Hán (Chiết tự chi tiết)</h2>
+                    ${vocabulary.map((w, idx) => `
+                        <div class="tip-card">
+                            <div class="tip-speaker" onclick="speak('${w.hz}')">🔊</div>
+                            <div class="flex items-center gap-4 mb-2">
+                                <span class="chinese-font text-3xl font-bold text-red-800">${idx+1}. ${w.hz}</span>
+                                <span class="text-gray-400 font-bold tracking-widest">${w.py}</span>
+                            </div>
+                            <p class="font-bold text-gray-700 mb-3 underline decoration-yellow-500">${w.vi}</p>
+                            <div class="bg-yellow-50/50 p-4 rounded-xl border border-yellow-100">
+                                <p class="text-sm text-gray-800 leading-relaxed whitespace-pre-wrap">${w.tip || "Dữ liệu đang được cập nhật..."}</p>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>`;
+        }
+
+        function renderTypingHz(container) {
+            const w = state.typingHzList[state.typingHzIndex];
+            container.innerHTML = `<div class="w-full max-w-md bg-white p-8 rounded-3xl shadow-xl border-t-8 border-red-800 text-center animate-fadeIn"><button onclick="state.typingHzList=shuffleArray([...vocabulary]); state.typingHzIndex=0; render()" class="mb-4 bg-yellow-500 hover:bg-yellow-600 text-red-900 font-bold py-1 px-4 rounded-full text-[10px] uppercase"><span>🔀</span> Đảo thứ tự gõ</button><h2 class="text-xl font-bold text-gray-500 mb-2 uppercase text-xs font-bold">Gõ Chữ Hán Tương Ứng</h2><div class="text-3xl font-bold text-red-800 mb-6 bg-red-50 p-6 rounded-2xl border-2 border-red-100 shadow-inner">${w.vi}</div><input type="text" id="type-input-hz" placeholder="Nhập chữ Hán..." class="w-full p-4 text-2xl text-center chinese-font border-2 border-gray-200 rounded-xl focus:border-red-500 outline-none"><div id="fb-hz" class="mt-4 flex flex-col items-center min-h-[60px]"><div id="fb-icon-hz" class="text-4xl"></div><div id="fb-py-hz" class="text-xl font-bold text-gray-500 italic"></div></div><div class="flex gap-2 mt-6"><button onclick="checkTypingHz()" class="btn-china flex-1 py-3 rounded-xl font-bold">Kiểm tra</button><button onclick="state.typingHzIndex=(state.typingHzIndex+1)%state.typingHzList.length; render()" class="bg-gray-200 text-gray-600 flex-1 py-3 rounded-xl font-bold">Bỏ qua</button></div><p class="mt-4 text-gray-400 font-bold text-[10px] uppercase tracking-widest">Tiến trình: ${state.typingHzIndex + 1} / ${vocabulary.length}</p></div>`;
+            document.getElementById('type-input-hz').focus();
+            document.getElementById('type-input-hz').addEventListener('keypress', e => { if(e.key==='Enter') checkTypingHz(); });
+        }
+
+        function checkTypingHz() {
+            const inp = document.getElementById('type-input-hz'); const val = inp.value.trim(); const correctWord = state.typingHzList[state.typingHzIndex];
+            if (val === correctWord.hz) {
+                document.getElementById('fb-icon-hz').innerText = '✅'; document.getElementById('fb-py-hz').innerText = correctWord.py;
+                state.score += 15; document.getElementById('score-val').innerText = state.score; speak("太好了"); launchFireworks(); 
+                setTimeout(() => { state.typingHzIndex = (state.typingHzIndex + 1) % state.typingHzList.length; render(); }, 2000);
+            } else { document.getElementById('fb-icon-hz').innerText = '❌'; speak("不对"); }
+        }
+
+        function isCorrectVietnamese(userInput, correctFullString) {
+            const inputClean = userInput.trim().toLowerCase();
+            const meanings = correctFullString.split(/[,/]/);
+            return meanings.some(m => {
+                let mainMeaning = m.split('(')[0].trim().toLowerCase();
+                let fullMeaning = m.trim().toLowerCase();
+                return inputClean === mainMeaning || inputClean === fullMeaning;
+            });
+        }
+
+        function renderTypingVi(container) {
+            const w = state.typingViList[state.typingViIndex];
+            container.innerHTML = `<div class="w-full max-w-md bg-white p-8 rounded-3xl shadow-xl border-t-8 border-red-800 text-center animate-fadeIn"><button onclick="state.typingViList=shuffleArray([...vocabulary]); state.typingViIndex=0; render()" class="mb-4 bg-yellow-500 hover:bg-yellow-600 text-red-900 font-bold py-1 px-4 rounded-full text-[10px] uppercase"><span>🔀</span> Đảo thứ tự gõ</button><h2 class="text-xl font-bold text-gray-500 mb-2 uppercase text-xs font-bold">Gõ Nghĩa Tiếng Việt</h2><div class="text-6xl font-bold text-red-800 mb-6 bg-red-50 p-6 rounded-2xl border-2 border-red-100 chinese-font shadow-inner">${w.hz}</div><input type="text" id="type-input-vi" placeholder="Nhập nghĩa tiếng Việt..." class="w-full p-4 text-lg text-center font-bold border-2 border-gray-200 rounded-xl focus:border-red-500 outline-none"><div id="fb-vi" class="mt-4 flex flex-col items-center min-h-[60px]"><div id="fb-icon-vi" class="text-4xl"></div><div id="fb-py-vi" class="text-xl font-bold text-gray-500 italic"></div></div><div class="flex gap-2 mt-6"><button onclick="checkTypingVi()" class="btn-china flex-1 py-3 rounded-xl font-bold">Kiểm tra</button><button onclick="state.typingViIndex=(state.typingViIndex+1)%state.typingViList.length; render()" class="bg-gray-200 text-gray-600 flex-1 py-3 rounded-xl font-bold">Bỏ qua</button></div><p class="mt-4 text-gray-400 font-bold text-[10px] uppercase tracking-widest">Tiến trình: ${state.typingViIndex + 1} / ${vocabulary.length}</p></div>`;
+            document.getElementById('type-input-vi').focus();
+            document.getElementById('type-input-vi').addEventListener('keypress', e => { if(e.key==='Enter') checkTypingVi(); });
+        }
+
+        function checkTypingVi() {
+            const inp = document.getElementById('type-input-vi'); const val = inp.value; const correctWord = state.typingViList[state.typingViIndex];
+            if (isCorrectVietnamese(val, correctWord.vi)) {
+                document.getElementById('fb-icon-vi').innerText = '✅'; document.getElementById('fb-py-vi').innerText = `${correctWord.py} (${correctWord.vi})`;
+                state.score += 15; document.getElementById('score-val').innerText = state.score; speak("太好了"); launchFireworks();
+                setTimeout(() => { state.typingViIndex = (state.typingViIndex + 1) % state.typingViList.length; render(); }, 2000);
+            } else { document.getElementById('fb-icon-vi').innerText = '❌'; speak("不对"); }
+        }
+
+        async function toggleFlashWrite(hz, btn) {
+            const staticHz = document.getElementById('static-hz'); const target = document.getElementById('flash-writer-container');
+            if (isWritingFlash) {
+                isWritingFlash = false; btn.classList.remove('active'); staticHz.style.opacity = "1";
+                if(target) { target.style.display = "none"; target.innerHTML = ""; }
+            } else {
+                isWritingFlash = true; btn.classList.add('active'); staticHz.style.opacity = "0";
+                if(target) {
+                    target.style.display = "block"; target.innerHTML = "";
+                    flashWriters = [];
+                    hz.split('').forEach((char, i) => {
+                        const div = document.createElement('div'); div.id = `fl-char-${i}`; div.style.display = "inline-block"; target.appendChild(div);
+                        const wr = HanziWriter.create(div.id, char, { width: 180, height: 180, padding: 5, strokeAnimationSpeed: 1, delayBetweenStrokes: 200, strokeColor: '#bc241c' });
+                        flashWriters.push(wr);
+                    });
+                    for (const wr of flashWriters) { if (!isWritingFlash) break; await wr.animateCharacter(); }
+                }
+            }
+        }
+
+        function renderFlashcard(container) {
+            const w = state.flashcardList[state.cardIndex]; isWritingFlash = false;
+            container.innerHTML = `<div class="flex flex-col items-center w-full animate-fadeIn"><button onclick="state.flashcardList=shuffleArray([...vocabulary]); state.cardIndex=0; render()" class="mb-6 bg-yellow-500 hover:bg-yellow-600 text-red-900 font-bold py-2 px-6 rounded-full shadow transition-all transform active:scale-95 uppercase text-xs font-bold"><span>🔀</span> Đảo Flashcard</button><div class="relative w-80 h-[480px] cursor-pointer group" onclick="this.classList.toggle('flipped')"><div class="card-inner relative w-full h-full"><div class="card-front"><div id="static-hz" class="chinese-font text-8xl mb-2 font-bold transition-opacity duration-300 text-white text-center">${w.hz}</div><div id="flash-writer-container" onclick="event.stopPropagation()"></div><span class="text-2xl font-semibold opacity-80 mb-8">${w.py}</span><div class="flex gap-6 mt-4"><div onclick="event.stopPropagation(); if(speak('${w.hz}')){this.classList.add('active'); setTimeout(()=>this.classList.remove('active'),1500)}" class="flash-action-btn"><span>🔊</span><p class="font-bold">NGHE</p></div><div onclick="event.stopPropagation(); toggleFlashWrite('${w.hz}', this)" class="flash-action-btn"><span>🖊️</span><p class="font-bold">VIẾT</p></div></div><p class="mt-12 text-[10px] uppercase tracking-widest opacity-40 text-white text-center">Click ngoài nút để lật xem nghĩa</p></div><div class="card-back text-center"><p class="text-blue-600 font-bold text-xs uppercase mb-2">${w.type}</p><h3 class="text-4xl font-bold text-red-800 mb-8">${w.vi}</h3><button onclick="event.stopPropagation(); this.closest('.group').classList.remove('flipped')" class="btn-china px-6 py-2 rounded-full text-xs font-bold uppercase">Quay lại</button></div></div></div><div class="flex gap-4 mt-8 w-full max-w-sm"><button onclick="state.cardIndex=(state.cardIndex-1+state.flashcardList.length)%state.flashcardList.length; render()" class="btn-china flex-1 py-3 rounded-xl font-bold uppercase">Lùi lại</button><button onclick="state.cardIndex=(state.cardIndex+1)%state.flashcardList.length; render()" class="btn-china flex-1 py-3 rounded-xl font-bold uppercase">Tiếp theo</button></div><p class="mt-4 text-red-800 font-bold opacity-50 text-xs uppercase tracking-widest">Thứ tự: ${state.cardIndex + 1} / ${state.flashcardList.length}</p></div>`;
+        }
+
+        function renderQuiz(container) {
+            const w = vocabulary[Math.floor(Math.random() * vocabulary.length)]; let opts = [w];
+            while(opts.length<4) { const r = vocabulary[Math.floor(Math.random()*vocabulary.length)]; if(!opts.some(o=>o.hz===r.hz)) opts.push(r); }
+            opts.sort(() => Math.random()-0.5);
+            container.innerHTML = `<div class="w-full max-w-2xl bg-white p-8 rounded-3xl shadow-xl border-t-8 border-red-800 text-center animate-fadeIn"><div class="chinese-font text-8xl font-bold text-red-800 my-4">${w.hz}</div><div class="text-xl text-gray-400 font-medium mb-8 font-semibold">${w.py}</div><div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="quiz-options">${opts.map(o => `<button onclick="handleQuizSelection(this, '${o.hz}', '${w.hz}')" class="p-5 border-2 border-gray-100 rounded-2xl font-bold text-gray-700 hover:border-red-500 transition-all shadow-sm">${o.vi}</button>`).join('')}</div></div>`;
+        }
+
+        function handleQuizSelection(btn, sel, cor) {
+            const container = document.getElementById('quiz-options'); if(container) container.style.pointerEvents = 'none';
+            if (sel === cor) { btn.classList.add('quiz-correct'); state.score += 10; document.getElementById('score-val').innerText = state.score; speak("对"); launchFireworks(); setTimeout(render, 1500); }
+            else { btn.classList.add('quiz-wrong'); speak("不对"); setTimeout(() => { if(container) container.style.pointerEvents = 'auto'; btn.classList.remove('quiz-wrong'); }, 1000); }
+        }
+
+        function openWritingModal(hz, py) {
+            document.getElementById('modal-pinyin').innerText = py; document.getElementById('writer-target').innerHTML = ""; document.getElementById('writing-modal').style.display = "flex";
+            writers = [];
+            hz.split('').forEach((char, i) => {
+                const divId = `lb-char-${i}`; const div = document.createElement('div'); div.id = divId; div.style.display = "inline-block"; document.getElementById('writer-target').appendChild(div);
+                const wr = HanziWriter.create(divId, char, { width: 150, height: 150, padding: 5, strokeAnimationSpeed: 1, delayBetweenStrokes: 200, strokeColor: '#bc241c' });
+                writers.push(wr);
+            });
+            animateStrokes();
+        }
+        function closeWritingModal() { document.getElementById('writing-modal').style.display = "none"; }
+        async function animateStrokes() { for (const wr of writers) await wr.animateCharacter(); }
+        function parseExample(ex) {
+            const res = { hz: ex, py: "", vi: "" }; const m = ex.match(/\(([^)]+)\)/);
+            if (m) { res.hz = ex.split('(')[0].trim(); const p = m[1].split(' - '); res.py = p[0] ? p[0].trim() : ""; res.vi = p[1] ? p[1].trim() : ""; }
+            return res;
+        }
+
+        window.onload = render;
+    </script>
+</body>
+</html>
